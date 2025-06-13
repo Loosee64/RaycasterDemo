@@ -2,7 +2,7 @@
 #include <iostream>
 
 const int SCREEN_WIDTH = 1000, SCREEN_HEIGHT = 500;
-float playerX, playerY, playerAngle, playerSize;
+float playerX, playerY, playerAngle, playerSize, playerDX, playerDY, playerSpeed;
 Color playerColour;
 Vector2 playerVelocity;
 
@@ -22,6 +22,8 @@ void initPlayer()
 	playerY = 250.0f;
 	playerSize = 10.0f;
 	playerColour = YELLOW;
+	playerSpeed = 100.0f;
+	playerDX = cos(playerAngle) * 5; playerDY = sin(playerAngle) * 5;
 }
 
 void init()
@@ -33,10 +35,10 @@ void init()
 void input()
 {
 	playerVelocity = { 0,0 };
-	if (IsKeyDown(KEY_W)) { playerVelocity.y -= 0.05; }
-	if (IsKeyDown(KEY_S)) { playerVelocity.y += 0.05; }
-	if (IsKeyDown(KEY_A)) { playerVelocity.x -= 0.05; }
-	if (IsKeyDown(KEY_D)) { playerVelocity.x += 0.05; }
+	if (IsKeyDown(KEY_W)) { playerVelocity.x += playerDX / playerSpeed; playerVelocity.y += playerDY/ playerSpeed;}
+	if (IsKeyDown(KEY_S)) { playerVelocity.x -= playerDX / playerSpeed; playerVelocity.y -= playerDY / playerSpeed; }
+	if (IsKeyDown(KEY_D)) { playerAngle += 0.001; if (playerAngle >= 2 * PI) { playerAngle = 0; } playerDX = cos(playerAngle) * 5; playerDY = sin(playerAngle) * 5; }
+	if (IsKeyDown(KEY_A)) { playerAngle -= 0.001; if (playerAngle <= 0) { playerAngle = 2 * PI; } playerDX = cos(playerAngle) * 5; playerDY = sin(playerAngle) * 5; }
 }
 
 void collision() 
@@ -97,6 +99,7 @@ void draw()
 		ClearBackground(GRAY);
 
 		DrawRectangle(playerX, playerY, playerSize, playerSize, playerColour);
+		DrawLine(playerX + +(playerSize / 2.0f), playerY + +(playerSize / 2.0f), playerX + playerDX * 10, playerY + playerDY * 10, RED);
 
 		for (int row = 0; row < ROW_SIZE; row++)
 		{
