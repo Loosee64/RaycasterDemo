@@ -1,8 +1,10 @@
 #include "raylib.h"
+#include <iostream>
 
 const int SCREEN_WIDTH = 1000, SCREEN_HEIGHT = 500;
 float playerX, playerY, playerAngle, playerSize;
 Color playerColour;
+Vector2 playerVelocity;
 
 int map[6][7] = { {1, 1, 1, 1, 1, 1, 1},
 				  {1, 0, 0, 0, 0, 0, 1},
@@ -16,7 +18,7 @@ const int COL_SIZE = 7;
 
 void initPlayer()
 {
-	playerX = 500.0f;
+	playerX = 200.0f;
 	playerY = 250.0f;
 	playerSize = 10.0f;
 	playerColour = YELLOW;
@@ -28,12 +30,64 @@ void init()
 
 }
 
+void input()
+{
+	playerVelocity = { 0,0 };
+	if (IsKeyDown(KEY_W)) { playerVelocity.y -= 0.05; }
+	if (IsKeyDown(KEY_S)) { playerVelocity.y += 0.05; }
+	if (IsKeyDown(KEY_A)) { playerVelocity.x -= 0.05; }
+	if (IsKeyDown(KEY_D)) { playerVelocity.x += 0.05; }
+}
+
+void collision() 
+{
+	float tempX = playerX + playerVelocity.x;
+	float tempY = playerY + playerVelocity.y;
+	bool collide = false;
+
+	for (int row = 0; row < ROW_SIZE; row++)
+	{
+		if (collide)
+		{
+			std::cout << "collide\n";
+			break;
+		}
+
+		for (int col = 0; col < COL_SIZE; col++)
+		{
+			if ((tempX + playerSize >= col * squareSize && tempX <= (col * squareSize) + squareSize) &&
+				(tempY + playerSize >= row * squareSize && tempY <= (row * squareSize) + squareSize) &&
+				map[row][col] == 1)
+			{
+				collide = true;
+				break;
+			}
+			else
+			{
+				collide = false;
+			}
+		}
+	}
+
+	if (!collide)
+	{
+		playerX += playerVelocity.x;
+		playerY += playerVelocity.y;
+	}
+	else
+	{
+		playerX -= playerVelocity.x;
+		playerY -= playerVelocity.y;
+	}
+}
+
 void update()
 {
-	if (IsKeyDown(KEY_W)) {playerY -= 0.05;}
-	if (IsKeyDown(KEY_S)) {playerY += 0.05;}
-	if (IsKeyDown(KEY_A)) {playerX -= 0.05;}
-	if (IsKeyDown(KEY_D)) {playerX += 0.05;}
+	input();
+	collision();
+	
+	playerX += playerVelocity.x;
+	playerY += playerVelocity.y;
 }
 
 void draw()
