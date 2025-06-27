@@ -93,57 +93,118 @@ void rayCalc()
 	ra = playerAngle;
 	for (r = 0; r < 1; r++)
 	{
-		// ---- Horizontal Lines ---
+		 //---- Horizontal Lines ----
+		//dof = 0;
+		//float aTan = -1/tan(ra);
+		//if (ra < PI) // Looking Up
+		//{
+		//	ry = (((int)playerY >> 6) << 6); // Rounding ry to nearest 64
+		//	rx = (ry - playerY) * aTan + playerX;
+		//	yo = -squareSize;
+		//	xo = yo * aTan;
+		//	if (xo > SCREEN_WIDTH)
+		//	{
+		//		xo = SCREEN_WIDTH;
+		//	}
+		//	if (xo < 0)
+		//	{
+		//		xo = 0;
+		//	}
+		//}
+
+		//if (ra > PI) // Looking Down
+		//{
+		//	ry = (((int)playerY >> 6) << 6) + squareSize; // Rounding ry to nearest 64
+		//	rx = (ry - playerY) * aTan + playerX;
+		//	yo = squareSize;
+		//	xo = yo * aTan;
+		//	if (xo > SCREEN_WIDTH)
+		//	{
+		//		xo = SCREEN_WIDTH;
+		//	}
+		//	if (xo < -SCREEN_WIDTH)
+		//	{
+		//		xo = -SCREEN_WIDTH;
+		//	}
+
+		//}
+
+		//if (ra == 3.14 || ra == 0)
+		//{
+		//	rx = playerX;
+		//	ry = playerY;
+		//	dof = 8;
+		//}
+
+		//if (rx > squareSize * 7)
+		//{
+		//	rx = squareSize * 6;
+		//}
+
+		//if (rx < 0)
+		//{
+		//	rx = 0;
+		//}
+
+		//mx = rx / squareSize;
+		//my = ry / squareSize;
+
+
+		//while (dof < 8)
+		//{
+		//	mx = rx / squareSize;
+		//	my = ry / squareSize;
+
+
+		//	if (map[my][mx] == 1 || map[my - 1][mx] == 1)
+		//	{
+		//		dof = 8;
+		//		std::cout << rx << " " << ry << " " << map[my][mx] << "\n";
+		//	}
+		//	else
+		//	{
+		//		rx += xo;
+		//		ry += yo;
+		//		dof += 1;
+		//	}
+		//}
+
+
+		// ---- Vertical Lines ----
 		dof = 0;
-		float aTan = -1/tan(ra);
-		if (ra < PI) // Looking Up
+		float nTan = -tan(ra);
+		if (ra > PI / 2 && ra < (3 * PI) / 2) // Looking Left
 		{
-			ry = (((int)playerY >> 6) << 6); // Rounding ry to nearest 64
-			rx = (ry - playerY) * aTan + playerX;
-			yo = -squareSize;
-			xo = yo * aTan;
-			if (xo > SCREEN_WIDTH)
-			{
-				xo = SCREEN_WIDTH;
-			}
-			if (xo < 0)
-			{
-				xo = 0;
-			}
+			rx = (((int)playerX >> 6) << 6); // Rounding ry to nearest 64
+			ry = (rx - playerX) * nTan + playerY;
+			xo = -squareSize;
+			yo = xo * nTan;
 		}
 
-		if (ra > PI) // Looking Down
+		if (ra < PI / 2 || ra > (3 * PI) / 2) // Looking Right
 		{
-			ry = (((int)playerY >> 6) << 6) + squareSize; // Rounding ry to nearest 64
-			rx = (ry - playerY) * aTan + playerX;
-			yo = squareSize;
-			xo = yo * aTan;
-			if (xo > SCREEN_WIDTH)
-			{
-				xo = SCREEN_WIDTH;
-			}
-			if (xo < -SCREEN_WIDTH)
-			{
-				xo = -SCREEN_WIDTH;
-			}
+			rx = (((int)playerX >> 6) << 6) + squareSize; // Rounding ry to nearest 64
+			ry = (rx - playerX) * nTan + playerY;
+			xo = squareSize;
+			yo = xo * nTan;
 
 		}
 
-		if (ra == 3.14 || ra == 0)
+		if (ra == PI / 2 || ra == (3 * PI) / 2)
 		{
 			rx = playerX;
 			ry = playerY;
 			dof = 8;
 		}
 
-		if (rx > squareSize * 7)
+		if (yo > squareSize * 7)
 		{
-			rx = squareSize * 6;
+			yo = squareSize * 6;
 		}
 
-		if (rx < 0)
+		if (ry < 0)
 		{
-			rx = 0;
+			ry = 0;
 		}
 
 		mx = rx / squareSize;
@@ -156,7 +217,7 @@ void rayCalc()
 			my = ry / squareSize;
 
 
-			if (map[my][mx] == 1 || map[my - 1][mx] == 1)
+			if (map[my][mx] == 1 || map[my][mx - 1] == 1)
 			{
 				dof = 8;
 				std::cout << rx << " " << ry << " " << map[my][mx] << "\n";
@@ -168,6 +229,7 @@ void rayCalc()
 				dof += 1;
 			}
 		}
+
 	}
 }
 
