@@ -272,6 +272,17 @@ void rayCalc()
 		DrawLine(playerX, playerY, rx, ry, RED);
 
 		// ---- Drawing 3D Walls ----
+		float ca = playerAngle - ra;
+		if (ca < 0)
+		{
+			ca = 2 * PI;
+		}
+		else if (ca > 2 * PI)
+		{
+			ca = 0;
+		}
+		distF *= cos(ca);
+
 		float lineH = (squareSize * 320) / distF;
 		float lineO = 250 - lineH / 2;
 		if (lineH > 320)
