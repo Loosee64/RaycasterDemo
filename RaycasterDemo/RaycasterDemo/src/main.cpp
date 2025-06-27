@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include <iostream>
+#define DR 0.0174533 // one degree in radians
 
 const int SCREEN_WIDTH = 1000, SCREEN_HEIGHT = 500;
 float playerX, playerY, playerAngle, playerSize, playerDX, playerDY, playerSpeed;
@@ -95,13 +96,21 @@ void rayCalc()
 	float distH = 100000, distV = 100000;
 	int r, dof, mx, my;
 
-	ra = playerAngle;
-	for (r = 0; r < 1; r++)
+	ra = -playerAngle + (DR * 180) - (DR * 30);
+	if (ra < 0)
+	{
+		ra += 2 * PI;
+	}
+	else if (ra > 2 * PI)
+	{
+		ra = 0;
+	}
+	for (r = 0; r < 60; r++)
 	{
 		 //---- Horizontal Lines ----
 		dof = 0;
 		float aTan = -1/tan(ra);
-		if (ra < PI) // Looking Up
+		if (ra > PI) // Looking Up
 		{
 			ry = (((int)playerY >> 6) << 6); // Rounding ry to nearest 64
 			rx = (ry - playerY) * aTan + playerX;
@@ -117,7 +126,7 @@ void rayCalc()
 			}
 		}
 
-		if (ra > PI) // Looking Down
+		if (ra < PI) // Looking Down
 		{
 			ry = (((int)playerY >> 6) << 6) + squareSize; // Rounding ry to nearest 64
 			rx = (ry - playerY) * aTan + playerX;
@@ -180,7 +189,7 @@ void rayCalc()
 		// ---- Vertical Lines ----
 		dof = 0;
 		float nTan = -tan(ra);
-		if (ra > PI / 2 && ra < (3 * PI) / 2) // Looking Left
+		if (ra < PI / 2 || ra > (3 * PI) / 2) // Looking Left
 		{
 			rx = (((int)playerX >> 6) << 6); // Rounding ry to nearest 64
 			ry = (rx - playerX) * nTan + playerY;
@@ -188,7 +197,7 @@ void rayCalc()
 			yo = xo * nTan;
 		}
 
-		if (ra < PI / 2 || ra > (3 * PI) / 2) // Looking Right
+		if (ra > PI / 2 && ra < (3 * PI) / 2) // Looking Right
 		{
 			rx = (((int)playerX >> 6) << 6) + squareSize; // Rounding ry to nearest 64
 			ry = (rx - playerX) * nTan + playerY;
@@ -254,6 +263,17 @@ void rayCalc()
 			ry = vy;
 		}
 
+		DrawLine(playerX, playerY, rx, ry, RED);
+
+		ra += DR;
+		if (ra < 0)
+		{
+			ra += 2 * PI;
+		}
+		else if (ra > 2 * PI)
+		{
+			ra = 0;
+		}
 	}
 }
 
@@ -261,7 +281,6 @@ void update()
 {
 	input();
 	collision();
-	rayCalc();
 	
 	playerX += playerVelocity.x;
 	playerY += playerVelocity.y;
@@ -288,9 +307,11 @@ void draw()
 			}
 		}
 
+		rayCalc();
+
 		DrawRectangle(playerX, playerY, playerSize, playerSize, playerColour);	
-		DrawLine(playerX, playerY, rx, ry, RED);
 		DrawRectangle(rx, ry, playerSize, playerSize, RED);
+		DrawLine(playerX , playerY, playerX + playerDX, playerY + playerDY, YELLOW);
 		//DrawLine(playerX + +(playerSize / 2.0f), playerY + +(playerSize / 2.0f), playerX + playerDX * 10, playerY + playerDY * 10, RED);*
 
 	EndDrawing();
@@ -304,8 +325,8 @@ int main() {
 
 	while (!WindowShouldClose())
 	{
-		update();
 		draw();
+		update();
 	}
 
 	CloseWindow();
