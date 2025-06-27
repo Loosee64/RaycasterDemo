@@ -15,7 +15,7 @@ int map[6][7] = { {1, 1, 1, 0, 1, 1, 1},
 int squareSize = 64;
 const int ROW_SIZE = 6;
 const int COL_SIZE = 7;
-float rx, ry, ra, xo, yo;
+float rx, ry, ra, xo, yo, vx, vy, hx, hy;
 
 void initPlayer()
 {
@@ -85,89 +85,96 @@ void collision()
 	}
 }
 
+float distance(float ax, float ay, float bx, float by)
+{
+	return (sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)));
+}
+
 void rayCalc()
 {
-	
+	float distH = 100000, distV = 100000;
 	int r, dof, mx, my;
 
 	ra = playerAngle;
 	for (r = 0; r < 1; r++)
 	{
 		 //---- Horizontal Lines ----
-		//dof = 0;
-		//float aTan = -1/tan(ra);
-		//if (ra < PI) // Looking Up
-		//{
-		//	ry = (((int)playerY >> 6) << 6); // Rounding ry to nearest 64
-		//	rx = (ry - playerY) * aTan + playerX;
-		//	yo = -squareSize;
-		//	xo = yo * aTan;
-		//	if (xo > SCREEN_WIDTH)
-		//	{
-		//		xo = SCREEN_WIDTH;
-		//	}
-		//	if (xo < 0)
-		//	{
-		//		xo = 0;
-		//	}
-		//}
+		dof = 0;
+		float aTan = -1/tan(ra);
+		if (ra < PI) // Looking Up
+		{
+			ry = (((int)playerY >> 6) << 6); // Rounding ry to nearest 64
+			rx = (ry - playerY) * aTan + playerX;
+			yo = -squareSize;
+			xo = yo * aTan;
+			if (xo > SCREEN_WIDTH)
+			{
+				xo = SCREEN_WIDTH;
+			}
+			if (xo < 0)
+			{
+				xo = 0;
+			}
+		}
 
-		//if (ra > PI) // Looking Down
-		//{
-		//	ry = (((int)playerY >> 6) << 6) + squareSize; // Rounding ry to nearest 64
-		//	rx = (ry - playerY) * aTan + playerX;
-		//	yo = squareSize;
-		//	xo = yo * aTan;
-		//	if (xo > SCREEN_WIDTH)
-		//	{
-		//		xo = SCREEN_WIDTH;
-		//	}
-		//	if (xo < -SCREEN_WIDTH)
-		//	{
-		//		xo = -SCREEN_WIDTH;
-		//	}
+		if (ra > PI) // Looking Down
+		{
+			ry = (((int)playerY >> 6) << 6) + squareSize; // Rounding ry to nearest 64
+			rx = (ry - playerY) * aTan + playerX;
+			yo = squareSize;
+			xo = yo * aTan;
+			if (xo > SCREEN_WIDTH)
+			{
+				xo = SCREEN_WIDTH;
+			}
+			if (xo < -SCREEN_WIDTH)
+			{
+				xo = -SCREEN_WIDTH;
+			}
 
-		//}
+		}
 
-		//if (ra == 3.14 || ra == 0)
-		//{
-		//	rx = playerX;
-		//	ry = playerY;
-		//	dof = 8;
-		//}
+		if (ra == 3.14 || ra == 0)
+		{
+			rx = playerX;
+			ry = playerY;
+			dof = 8;
+		}
 
-		//if (rx > squareSize * 7)
-		//{
-		//	rx = squareSize * 6;
-		//}
+		if (rx > squareSize * 7)
+		{
+			rx = squareSize * 6;
+		}
 
-		//if (rx < 0)
-		//{
-		//	rx = 0;
-		//}
+		if (rx < 0)
+		{
+			rx = 0;
+		}
 
-		//mx = rx / squareSize;
-		//my = ry / squareSize;
-
-
-		//while (dof < 8)
-		//{
-		//	mx = rx / squareSize;
-		//	my = ry / squareSize;
+		mx = rx / squareSize;
+		my = ry / squareSize;
 
 
-		//	if (map[my][mx] == 1 || map[my - 1][mx] == 1)
-		//	{
-		//		dof = 8;
-		//		std::cout << rx << " " << ry << " " << map[my][mx] << "\n";
-		//	}
-		//	else
-		//	{
-		//		rx += xo;
-		//		ry += yo;
-		//		dof += 1;
-		//	}
-		//}
+		while (dof < 8)
+		{
+			mx = rx / squareSize;
+			my = ry / squareSize;
+
+
+			if (map[my][mx] == 1 || map[my - 1][mx] == 1)
+			{
+				dof = 8;
+				hx = rx;
+				hy = ry;
+				distH = distance(playerX, playerY, hx, hy);
+			}
+			else
+			{
+				rx += xo;
+				ry += yo;
+				dof += 1;
+			}
+		}
 
 
 		// ---- Vertical Lines ----
@@ -216,11 +223,17 @@ void rayCalc()
 			mx = rx / squareSize;
 			my = ry / squareSize;
 
+			if (my > 6)
+			{
+				my = 6;
+			}
 
-			if (map[my][mx] == 1 || map[my][mx - 1] == 1)
+			if (map[my][mx] == 1 || map[my][mx - 1] == 1) // be careful of mx - 1
 			{
 				dof = 8;
-				std::cout << rx << " " << ry << " " << map[my][mx] << "\n";
+				vx = rx;
+				vy = ry;
+				distV = distance(playerX, playerY, vx, vy);
 			}
 			else
 			{
@@ -228,6 +241,17 @@ void rayCalc()
 				ry += yo;
 				dof += 1;
 			}
+		}
+
+		if (distV > distH)
+		{
+			rx = hx;
+			ry = hy;
+		}
+		else if (distH > distV)
+		{
+			rx = vx;
+			ry = vy;
 		}
 
 	}
@@ -264,7 +288,7 @@ void draw()
 			}
 		}
 
-		DrawRectangle(playerX, playerY, playerSize, playerSize, playerColour);
+		DrawRectangle(playerX, playerY, playerSize, playerSize, playerColour);	
 		DrawLine(playerX, playerY, rx, ry, RED);
 		DrawRectangle(rx, ry, playerSize, playerSize, RED);
 		//DrawLine(playerX + +(playerSize / 2.0f), playerY + +(playerSize / 2.0f), playerX + playerDX * 10, playerY + playerDY * 10, RED);*
