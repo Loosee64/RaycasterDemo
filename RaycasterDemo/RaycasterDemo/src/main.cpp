@@ -7,7 +7,7 @@ float playerX, playerY, playerAngle, playerSize, playerDX, playerDY, playerSpeed
 Color playerColour;
 Vector2 playerVelocity;
 
-int map[6][7] = { {1, 1, 1, 0, 1, 1, 1},
+int map[6][7] = { {1, 1, 1, 1, 1, 1, 1},
 				  {1, 0, 0, 0, 0, 0, 1},
 				  {1, 0, 0, 0, 0, 0, 1},
 				  {1, 0, 1, 0, 0, 0, 1},
@@ -93,7 +93,7 @@ float distance(float ax, float ay, float bx, float by)
 
 void rayCalc()
 {
-	float distH = 100000, distV = 100000;
+	float distH = 100000, distV = 100000, distF;
 	int r, dof, mx, my;
 
 	ra = -playerAngle + (DR * 180) - (DR * 30);
@@ -256,14 +256,29 @@ void rayCalc()
 		{
 			rx = hx;
 			ry = hy;
+			distF = distH;
 		}
 		else if (distH > distV)
 		{
 			rx = vx;
 			ry = vy;
+			distF = distV;
+		}
+		else
+		{
+			distF = 552;
 		}
 
 		DrawLine(playerX, playerY, rx, ry, RED);
+
+		// ---- Drawing 3D Walls ----
+		float lineH = (squareSize * 320) / distF;
+		float lineO = 250 - lineH / 2;
+		if (lineH > 320)
+		{
+			lineH = 320;
+		}
+		DrawLineEx(Vector2{(float)r * 8 + 552, lineO }, Vector2{(float)r * 8 + 552, lineH + lineO },8 , RED);
 
 		ra += DR;
 		if (ra < 0)
