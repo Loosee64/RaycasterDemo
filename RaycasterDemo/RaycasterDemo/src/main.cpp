@@ -2,19 +2,23 @@
 #include <iostream>
 #define DR 0.0174533 // one degree in radians
 
-const int SCREEN_WIDTH = 1000, SCREEN_HEIGHT = 500;
+const int SCREEN_WIDTH = 1000, SCREEN_HEIGHT = 500, RENDER_HEIGHT = 500, RENDER_WIDTH = 550;
 float playerX, playerY, playerAngle, playerSize, playerDX, playerDY, playerSpeed;
 Color playerColour, wallColour;
 Vector2 playerVelocity;
+
+bool collide = false;
+enum RenderMode {LINES, RECTS};
+RenderMode renderMode = LINES;
 
 Color vColour{ 255, 0, 0, 255 };
 Color hColour{ 200, 0, 0, 255 };
 
 int map[6][7] = { {1, 1, 1, 1, 1, 1, 1},
-				  {1, 0, 0, 0, 0, 0, 1},
-				  {1, 0, 0, 0, 0, 0, 1},
-				  {1, 0, 1, 0, 0, 0, 1},
-				  {1, 0, 1, 0, 0, 0, 1},
+				  {1, 0, 0, 0, 2, 0, 1},
+				  {1, 0, 0, 0, 1, 0, 1},
+				  {1, 0, 0, 0, 2, 0, 1},
+				  {1, 0, 0, 0, 1, 0, 1},
 				  {1, 1, 1, 1, 1, 1, 1} };
 int squareSize = 64;
 const int ROW_SIZE = 6;
@@ -45,6 +49,8 @@ void input()
 	if (IsKeyDown(KEY_S)) { playerVelocity.x -= playerDX / playerSpeed; playerVelocity.y -= playerDY / playerSpeed; }
 	if (IsKeyDown(KEY_D)) { playerAngle += 0.001; if (playerAngle >= 2 * PI) { playerAngle = 0; } playerDX = cos(playerAngle) * 5; playerDY = sin(playerAngle) * 5; }
 	if (IsKeyDown(KEY_A)) { playerAngle -= 0.001; if (playerAngle <= 0) { playerAngle = 2 * PI; } playerDX = cos(playerAngle) * 5; playerDY = sin(playerAngle) * 5; }
+	if (IsKeyDown(KEY_F1)) { renderMode = LINES; }
+	if (IsKeyDown(KEY_F2)) { renderMode = RECTS; }
 }
 
 void collision() 
@@ -164,7 +170,7 @@ void rayCalc()
 				mx = 6;
 			}
 
-			if (map[my][mx] == 1 || map[my - 1][mx] == 1)
+			if (map[my][mx] > 0 || map[my - 1][mx] > 0)
 			{
 				dof = 8;
 				hx = rx;
@@ -244,7 +250,7 @@ void rayCalc()
 				mx = 0;
 			}
 
-			if (map[my][mx] == 1 || map[my][mx - 1] == 1) // be careful of mx - 1
+			if (map[my][mx] > 0 || map[my][mx - 1] > 0) // be careful of mx - 1
 			{
 				dof = 8;
 				vx = rx;
@@ -272,7 +278,13 @@ void rayCalc()
 			wallColour = vColour;
 		}
 
-		DrawLine(playerX, playerY, rx, ry, RED);
+		if (map[my][mx] == 2 || map[my][mx - 1] == 2)
+		{
+			wallColour.b = wallColour.r;
+			wallColour.r = 0.0f;
+		}
+
+		DrawLine(playerX, playerY, rx, ry, wallColour);
 
 		// ---- Drawing 3D Walls ----
 		float ca = playerAngle - ra;
@@ -291,13 +303,24 @@ void rayCalc()
 		}
 		distF = (dx * cos(playerAngle)) + (dy * sin(playerAngle));
 
-		float lineH = (squareSize * 320) / distF;
-		if (lineH > 320)
+		float lineH = (squareSize * RENDER_HEIGHT) / distF;
+		if (lineH > RENDER_HEIGHT)
 		{
-			lineH = 320;
+			lineH = RENDER_HEIGHT;
 		}
 		float lineO = 250 - lineH / 2;
-		DrawLineEx(Vector2{(float)r * 8 + 552, lineO }, Vector2{(float)r * 8 + 552, lineH + lineO },8 , wallColour);
+
+		if (renderMode == LINES)
+		{
+			DrawLineEx(Vector2{ (float)r * 8 + RENDER_WIDTH, lineO }, Vector2{ (float)r * 8 + RENDER_WIDTH, lineH + lineO }, 8, wallColour);
+		}
+		else if (renderMode == RECTS)
+		{
+			for (int y = 0; y < lineH; y += 10)
+			{
+				DrawRectangle((float)r * 8 + RENDER_WIDTH, y + lineO, 8, 10, wallColour);
+			}
+		}
 
 		ra += DR;
 		if (ra < 0)
@@ -307,6 +330,22 @@ void rayCalc()
 		else if (ra > 2 * PI)
 		{
 			ra = 0;
+		}
+
+		// Doors
+		if (distF <= 40 && map[my][mx - 1] == 2)
+		{
+			if (IsKeyDown(KEY_E))
+			{
+				map[my][mx - 1] = 0;
+			}
+		}
+		if (distF <= 40 && map[my][mx] == 2)
+		{
+			if (IsKeyDown(KEY_E))
+			{
+				map[my][mx] = 0;
+			}
 		}
 	}
 }
@@ -337,6 +376,10 @@ void draw()
 				if (map[row][col] == 0)
 				{
 					DrawRectangle(col * squareSize, row * squareSize, squareSize - 1, squareSize - 1, BLACK);
+				}
+				if (map[row][col] == 2)
+				{
+					DrawRectangle(col * squareSize, row * squareSize, squareSize - 1, squareSize - 1, BLUE);
 				}
 			}
 		}
