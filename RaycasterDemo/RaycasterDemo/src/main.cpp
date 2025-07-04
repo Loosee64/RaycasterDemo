@@ -11,6 +11,9 @@ bool collide = false;
 enum RenderMode {LINES, RECTS};
 RenderMode renderMode = LINES;
 
+int r, dof, mx, my;
+float distF;
+
 Color vColour{ 255, 0, 0, 255 };
 Color hColour{ 200, 0, 0, 255 };
 
@@ -100,11 +103,208 @@ float distance(float ax, float ay, float bx, float by)
 	return (sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)));
 }
 
+float rayVerticalCalc()
+{
+	float distV = 100000;
+
+	// ---- Vertical Lines ----
+	dof = 0;
+	float nTan = -tan(ra);
+	if (ra < PI / 2 || ra >(3 * PI) / 2) // Looking Left
+	{
+		rx = (((int)playerX >> 6) << 6); // Rounding ry to nearest 64
+		ry = (rx - playerX) * nTan + playerY;
+		xo = -squareSize;
+		yo = xo * nTan;
+	}
+
+	if (ra > PI / 2 && ra < (3 * PI) / 2) // Looking Right
+	{
+		rx = (((int)playerX >> 6) << 6) + squareSize; // Rounding ry to nearest 64
+		ry = (rx - playerX) * nTan + playerY;
+		xo = squareSize;
+		yo = xo * nTan;
+
+	}
+
+	if (ra == PI / 2 || ra == (3 * PI) / 2)
+	{
+		rx = playerX;
+		ry = playerY;
+		dof = 8;
+	}
+
+	if (yo > squareSize * 7)
+	{
+		yo = squareSize * 6;
+	}
+
+	if (ry < 0)
+	{
+		ry = 0;
+	}
+
+	mx = rx / squareSize;
+	my = ry / squareSize;
+
+
+	while (dof < 8)
+	{
+		mx = rx / squareSize;
+		my = ry / squareSize;
+
+		if (my > 5)
+		{
+			my = 5;
+		}
+		if (mx > 6)
+		{
+			mx = 6;
+		}
+
+		if (my < 0)
+		{
+			my = 0;
+		}
+		if (mx < 0)
+		{
+			mx = 0;
+		}
+
+		if (map[my][mx] > 0 || map[my][mx - 1] > 0) // be careful of mx - 1
+		{
+			dof = 8;
+			vx = rx;
+			vy = ry;
+			distV = distance(playerX, playerY, vx, vy);
+		}
+		else
+		{
+			rx += xo;
+			ry += yo;
+			dof += 1;
+		}
+	}
+
+	return distV;
+}
+
+float rayHorizontalCalc()
+{
+	float distH = 100000;
+
+	//---- Horizontal Lines ----
+	dof = 0;
+	float aTan = -1 / tan(ra);
+	if (ra > PI) // Looking Up
+	{
+		ry = (((int)playerY >> 6) << 6); // Rounding ry to nearest 64
+		rx = (ry - playerY) * aTan + playerX;
+		yo = -squareSize;
+		xo = yo * aTan;
+	}
+
+	if (ra < PI) // Looking Down
+	{
+		ry = (((int)playerY >> 6) << 6) + squareSize; // Rounding ry to nearest 64
+		rx = (ry - playerY) * aTan + playerX;
+		yo = squareSize;
+		xo = yo * aTan;
+	}
+
+	if (ra == 3.14 || ra == 0)
+	{
+		rx = playerX;
+		ry = playerY;
+		dof = 8;
+	}
+
+	if (rx > squareSize * 7)
+	{
+		rx = squareSize * 6;
+	}
+
+	if (rx < 0)
+	{
+		rx = 0;
+	}
+
+	mx = rx / squareSize;
+	my = ry / squareSize;
+
+
+	while (dof < 8)
+	{
+		mx = rx / squareSize;
+		my = ry / squareSize;
+
+		if (my > 5)
+		{
+			my = 5;
+		}
+		if (mx > 6)
+		{
+			mx = 6;
+		}
+
+		if (map[my][mx] > 0 || map[my - 1][mx] > 0)
+		{
+			dof = 8;
+			hx = rx;
+			hy = ry;
+			distH = distance(playerX, playerY, hx, hy);
+		}
+		else
+		{
+			rx += xo;
+			ry += yo;
+			dof += 1;
+		}
+	}
+	return distH;
+}
+
+void render3D()
+{
+	// ---- Drawing 3D Walls ----
+	float ca = playerAngle - ra;
+	float dx, dy;
+
+	dx = rx - playerX;
+	dy = ry - playerY;
+
+	if (ca < 0)
+	{
+		ca = 2 * PI;
+	}
+	else if (ca > 2 * PI)
+	{
+		ca = 0;
+	}
+	distF = (dx * cos(playerAngle)) + (dy * sin(playerAngle));
+
+	float lineH = (squareSize * RENDER_HEIGHT) / distF;
+	if (lineH > RENDER_HEIGHT)
+	{
+		lineH = RENDER_HEIGHT;
+	}
+	float lineO = 250 - lineH / 2;
+
+	if (renderMode == LINES)
+	{
+		DrawLineEx(Vector2{ (float)r * 8 + RENDER_WIDTH, lineO }, Vector2{ (float)r * 8 + RENDER_WIDTH, lineH + lineO }, 8, wallColour);
+	}
+	else if (renderMode == RECTS)
+	{
+		for (int y = 0; y < lineH; y += 10)
+		{
+			DrawRectangle((float)r * 8 + RENDER_WIDTH, y + lineO, 8, 10, wallColour);
+		}
+	}
+}
+
 void rayCalc()
 {
-	float distH = 100000, distV = 100000, distF;
-	int r, dof, mx, my;
-
 	ra = -playerAngle + (DR * 180) - (DR * 30);
 	if (ra < 0)
 	{
@@ -114,156 +314,11 @@ void rayCalc()
 	{
 		ra = 0;
 	}
+	
 	for (r = 0; r < 60; r++)
 	{
-		 //---- Horizontal Lines ----
-		dof = 0;
-		float aTan = -1/tan(ra);
-		if (ra > PI) // Looking Up
-		{
-			ry = (((int)playerY >> 6) << 6); // Rounding ry to nearest 64
-			rx = (ry - playerY) * aTan + playerX;
-			yo = -squareSize;
-			xo = yo * aTan;
-		}
-
-		if (ra < PI) // Looking Down
-		{
-			ry = (((int)playerY >> 6) << 6) + squareSize; // Rounding ry to nearest 64
-			rx = (ry - playerY) * aTan + playerX;
-			yo = squareSize;
-			xo = yo * aTan;
-		}
-
-		if (ra == 3.14 || ra == 0)
-		{
-			rx = playerX;
-			ry = playerY;
-			dof = 8;
-		}
-
-		if (rx > squareSize * 7)
-		{
-			rx = squareSize * 6;
-		}
-
-		if (rx < 0)
-		{
-			rx = 0;
-		}
-
-		mx = rx / squareSize;
-		my = ry / squareSize;
-
-
-		while (dof < 8)
-		{
-			mx = rx / squareSize;
-			my = ry / squareSize;
-
-			if (my > 5)
-			{
-				my = 5;
-			}
-			if (mx > 6)
-			{
-				mx = 6;
-			}
-
-			if (map[my][mx] > 0 || map[my - 1][mx] > 0)
-			{
-				dof = 8;
-				hx = rx;
-				hy = ry;
-				distH = distance(playerX, playerY, hx, hy);
-			}
-			else
-			{
-				rx += xo;
-				ry += yo;
-				dof += 1;
-			}
-		}
-
-
-		// ---- Vertical Lines ----
-		dof = 0;
-		float nTan = -tan(ra);
-		if (ra < PI / 2 || ra > (3 * PI) / 2) // Looking Left
-		{
-			rx = (((int)playerX >> 6) << 6); // Rounding ry to nearest 64
-			ry = (rx - playerX) * nTan + playerY;
-			xo = -squareSize;
-			yo = xo * nTan;
-		}
-
-		if (ra > PI / 2 && ra < (3 * PI) / 2) // Looking Right
-		{
-			rx = (((int)playerX >> 6) << 6) + squareSize; // Rounding ry to nearest 64
-			ry = (rx - playerX) * nTan + playerY;
-			xo = squareSize;
-			yo = xo * nTan;
-
-		}
-
-		if (ra == PI / 2 || ra == (3 * PI) / 2)
-		{
-			rx = playerX;
-			ry = playerY;
-			dof = 8;
-		}
-
-		if (yo > squareSize * 7)
-		{
-			yo = squareSize * 6;
-		}
-
-		if (ry < 0)
-		{
-			ry = 0;
-		}
-
-		mx = rx / squareSize;
-		my = ry / squareSize;
-
-
-		while (dof < 8)
-		{
-			mx = rx / squareSize;
-			my = ry / squareSize;
-
-			if (my > 5)
-			{
-				my = 5;
-			}
-			if (mx > 6)
-			{
-				mx = 6;
-			}
-
-			if (my < 0)
-			{
-				my = 0;
-			}
-			if (mx < 0)
-			{
-				mx = 0;
-			}
-
-			if (map[my][mx] > 0 || map[my][mx - 1] > 0) // be careful of mx - 1
-			{
-				dof = 8;
-				vx = rx;
-				vy = ry;
-				distV = distance(playerX, playerY, vx, vy);
-			}
-			else
-			{
-				rx += xo;
-				ry += yo;
-				dof += 1;
-			}
-		}
+		float distH = rayHorizontalCalc();
+		float distV = rayVerticalCalc();
 
 		if (distV > distH)
 		{
@@ -286,41 +341,7 @@ void rayCalc()
 
 		DrawLine(playerX, playerY, rx, ry, wallColour);
 
-		// ---- Drawing 3D Walls ----
-		float ca = playerAngle - ra;
-		float dx, dy;
-
-		dx = rx - playerX;
-		dy = ry - playerY;
-
-		if (ca < 0)
-		{
-			ca = 2 * PI;
-		}
-		else if (ca > 2 * PI)
-		{
-			ca = 0;
-		}
-		distF = (dx * cos(playerAngle)) + (dy * sin(playerAngle));
-
-		float lineH = (squareSize * RENDER_HEIGHT) / distF;
-		if (lineH > RENDER_HEIGHT)
-		{
-			lineH = RENDER_HEIGHT;
-		}
-		float lineO = 250 - lineH / 2;
-
-		if (renderMode == LINES)
-		{
-			DrawLineEx(Vector2{ (float)r * 8 + RENDER_WIDTH, lineO }, Vector2{ (float)r * 8 + RENDER_WIDTH, lineH + lineO }, 8, wallColour);
-		}
-		else if (renderMode == RECTS)
-		{
-			for (int y = 0; y < lineH; y += 10)
-			{
-				DrawRectangle((float)r * 8 + RENDER_WIDTH, y + lineO, 8, 10, wallColour);
-			}
-		}
+		render3D();
 
 		ra += DR;
 		if (ra < 0)
@@ -349,6 +370,10 @@ void rayCalc()
 		}
 	}
 }
+
+
+		
+
 
 void update()
 {
@@ -384,7 +409,7 @@ void draw()
 			}
 		}
 
-		rayCalc();
+		rayCalc(); // Here so that the rays render on the minimap
 
 		DrawRectangle(playerX, playerY, playerSize, playerSize, playerColour);	
 		DrawRectangle(rx, ry, playerSize, playerSize, RED);
@@ -402,8 +427,8 @@ int main() {
 
 	while (!WindowShouldClose())
 	{
-		draw();
 		update();
+		draw();
 	}
 
 	CloseWindow();
