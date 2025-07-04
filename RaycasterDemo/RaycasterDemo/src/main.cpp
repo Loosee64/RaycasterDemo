@@ -8,7 +8,7 @@ Color playerColour, wallColour;
 Vector2 playerVelocity;
 
 Color vColour{ 255, 0, 0, 255 };
-Color hColour{ 230, 0, 0, 255 };
+Color hColour{ 200, 0, 0, 255 };
 
 int map[6][7] = { {1, 1, 1, 1, 1, 1, 1},
 				  {1, 0, 0, 0, 0, 0, 1},
@@ -292,11 +292,11 @@ void rayCalc()
 		distF = (dx * cos(playerAngle)) + (dy * sin(playerAngle));
 
 		float lineH = (squareSize * 320) / distF;
-		float lineO = 250 - lineH / 2;
 		if (lineH > 320)
 		{
 			lineH = 320;
 		}
+		float lineO = 250 - lineH / 2;
 		DrawLineEx(Vector2{(float)r * 8 + 552, lineO }, Vector2{(float)r * 8 + 552, lineH + lineO },8 , wallColour);
 
 		ra += DR;
