@@ -273,6 +273,11 @@ void rayCalc()
 
 		// ---- Drawing 3D Walls ----
 		float ca = playerAngle - ra;
+		float dx, dy;
+
+		dx = rx - playerX;
+		dy = ry - playerY;
+
 		if (ca < 0)
 		{
 			ca = 2 * PI;
@@ -281,7 +286,7 @@ void rayCalc()
 		{
 			ca = 0;
 		}
-		distF *= cos(ca);
+		distF = (dx * cos(playerAngle)) + (dy * sin(playerAngle));
 
 		float lineH = (squareSize * 320) / distF;
 		float lineO = 250 - lineH / 2;
