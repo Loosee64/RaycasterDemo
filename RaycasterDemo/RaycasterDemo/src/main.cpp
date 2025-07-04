@@ -4,8 +4,11 @@
 
 const int SCREEN_WIDTH = 1000, SCREEN_HEIGHT = 500;
 float playerX, playerY, playerAngle, playerSize, playerDX, playerDY, playerSpeed;
-Color playerColour;
+Color playerColour, wallColour;
 Vector2 playerVelocity;
+
+Color vColour{ 255, 0, 0, 255 };
+Color hColour{ 230, 0, 0, 255 };
 
 int map[6][7] = { {1, 1, 1, 1, 1, 1, 1},
 				  {1, 0, 0, 0, 0, 0, 1},
@@ -116,14 +119,6 @@ void rayCalc()
 			rx = (ry - playerY) * aTan + playerX;
 			yo = -squareSize;
 			xo = yo * aTan;
-			if (xo > SCREEN_WIDTH)
-			{
-				xo = SCREEN_WIDTH;
-			}
-			if (xo < 0)
-			{
-				xo = 0;
-			}
 		}
 
 		if (ra < PI) // Looking Down
@@ -132,15 +127,6 @@ void rayCalc()
 			rx = (ry - playerY) * aTan + playerX;
 			yo = squareSize;
 			xo = yo * aTan;
-			if (xo > SCREEN_WIDTH)
-			{
-				xo = SCREEN_WIDTH;
-			}
-			if (xo < -SCREEN_WIDTH)
-			{
-				xo = -SCREEN_WIDTH;
-			}
-
 		}
 
 		if (ra == 3.14 || ra == 0)
@@ -169,6 +155,14 @@ void rayCalc()
 			mx = rx / squareSize;
 			my = ry / squareSize;
 
+			if (my > 5)
+			{
+				my = 5;
+			}
+			if (mx > 6)
+			{
+				mx = 6;
+			}
 
 			if (map[my][mx] == 1 || map[my - 1][mx] == 1)
 			{
@@ -232,9 +226,22 @@ void rayCalc()
 			mx = rx / squareSize;
 			my = ry / squareSize;
 
-			if (my > 6)
+			if (my > 5)
 			{
-				my = 6;
+				my = 5;
+			}
+			if (mx > 6)
+			{
+				mx = 6;
+			}
+
+			if (my < 0)
+			{
+				my = 0;
+			}
+			if (mx < 0)
+			{
+				mx = 0;
 			}
 
 			if (map[my][mx] == 1 || map[my][mx - 1] == 1) // be careful of mx - 1
@@ -256,17 +263,13 @@ void rayCalc()
 		{
 			rx = hx;
 			ry = hy;
-			distF = distH;
+			wallColour = hColour;
 		}
 		else if (distH > distV)
 		{
 			rx = vx;
 			ry = vy;
-			distF = distV;
-		}
-		else
-		{
-			distF = 552;
+			wallColour = vColour;
 		}
 
 		DrawLine(playerX, playerY, rx, ry, RED);
@@ -294,7 +297,7 @@ void rayCalc()
 		{
 			lineH = 320;
 		}
-		DrawLineEx(Vector2{(float)r * 8 + 552, lineO }, Vector2{(float)r * 8 + 552, lineH + lineO },8 , RED);
+		DrawLineEx(Vector2{(float)r * 8 + 552, lineO }, Vector2{(float)r * 8 + 552, lineH + lineO },8 , wallColour);
 
 		ra += DR;
 		if (ra < 0)
